@@ -1,3 +1,4 @@
+import Day from './day';
 import Todo from './todo';
 import WxData from './wxData';
 import convertSolarLunar from './convertSolarLunar';
@@ -26,19 +27,32 @@ class Calendar extends WxData {
   renderCalendar(curYear, curMonth, curDate) {
     return new Promise(resolve => {
       this.calculateEmptyGrids(curYear, curMonth);
-      this.calculateDays(curYear, curMonth, curDate);
-      const { todoLabels } = this.getData('calendar') || {};
-      if (
-        todoLabels &&
-        todoLabels instanceof Array &&
-        todoLabels.find(item => +item.month === +curMonth)
-      ) {
-        Todo(this.Component).setTodoLabels();
-      }
+      this.calculateDays(curYear, curMonth, curDate).then(() => {
+        const { todoLabels, specialStyleDates } =
+          this.getData('calendar') || {};
+        if (
+          todoLabels &&
+          specialStyleDates.length &&
+          todoLabels.find(
+            item => +item.month === +curMonth && +item.year === +curYear
+          )
+        ) {
+          Todo(this.Component).setTodoLabels();
+        }
+        if (
+          specialStyleDates &&
+          specialStyleDates.length &&
+          specialStyleDates.find(
+            item => +item.month === +curMonth && +item.year === +curYear
+          )
+        ) {
+          Day(this.Component).setDateStyle();
+        }
 
-      if (!this.Component.firstRender) {
-        resolve();
-      }
+        if (!this.Component.firstRender) {
+          resolve();
+        }
+      });
     });
   }
   /**
@@ -223,52 +237,59 @@ class Calendar extends WxData {
    * @param {number} month  月份
    */
   calculateDays(year, month, curDate) {
-    let days = [];
-    const { todayTimestamp, disableDays = [] } = this.getData('calendar');
-    days = this.buildDate(year, month);
-    const selectedDay = this.setSelectedDay(year, month, curDate);
-    const selectedDayCol = selectedDay.map(
-      d => `${+d.year}-${+d.month}-${+d.day}`
-    );
-    const disableDaysCol = disableDays.map(
-      d => `${+d.year}-${+d.month}-${+d.day}`
-    );
-    days.forEach(item => {
-      const cur = `${+item.year}-${+item.month}-${+item.day}`;
-      if (selectedDayCol.includes(cur)) item.choosed = true;
-      if (disableDaysCol.includes(cur)) item.disable = true;
-      const timestamp = getDate
-        .newDate(item.year, item.month, item.day)
-        .getTime();
-      const {
-        showLunar,
-        disablePastDay,
-        disableLaterDay
-      } = this.getCalendarConfig();
-      if (showLunar) {
-        item.lunar = convertSolarLunar.solar2lunar(
-          +item.year,
-          +item.month,
-          +item.day
-        );
-      }
-      let disabelByConfig = false;
-      if (disablePastDay) {
-        disabelByConfig =
-          disablePastDay && timestamp - todayTimestamp < 0 && !item.disable;
-      } else if (disableLaterDay) {
-        disabelByConfig =
-          disableLaterDay && timestamp - todayTimestamp > 0 && !item.disable;
-      }
-      const isDisable = disabelByConfig || this.__isDisable(timestamp);
-      if (isDisable) {
-        item.disable = true;
-        item.choosed = false;
-      }
-    });
-    this.setData({
-      'calendar.days': days,
-      'calendar.selectedDay': selectedDay || []
+    return new Promise((resolve, reject) => {
+      let days = [];
+      const { todayTimestamp, disableDays = [] } = this.getData('calendar');
+      days = this.buildDate(year, month);
+      const selectedDay = this.setSelectedDay(year, month, curDate);
+      const selectedDayCol = selectedDay.map(
+        d => `${+d.year}-${+d.month}-${+d.day}`
+      );
+      const disableDaysCol = disableDays.map(
+        d => `${+d.year}-${+d.month}-${+d.day}`
+      );
+      days.forEach(item => {
+        const cur = `${+item.year}-${+item.month}-${+item.day}`;
+        if (selectedDayCol.includes(cur)) item.choosed = true;
+        if (disableDaysCol.includes(cur)) item.disable = true;
+        const timestamp = getDate
+          .newDate(item.year, item.month, item.day)
+          .getTime();
+        const {
+          showLunar,
+          disablePastDay,
+          disableLaterDay
+        } = this.getCalendarConfig();
+        if (showLunar) {
+          item.lunar = convertSolarLunar.solar2lunar(
+            +item.year,
+            +item.month,
+            +item.day
+          );
+        }
+        let disabelByConfig = false;
+        if (disablePastDay) {
+          disabelByConfig =
+            disablePastDay && timestamp - todayTimestamp < 0 && !item.disable;
+        } else if (disableLaterDay) {
+          disabelByConfig =
+            disableLaterDay && timestamp - todayTimestamp > 0 && !item.disable;
+        }
+        const isDisable = disabelByConfig || this.__isDisable(timestamp);
+        if (isDisable) {
+          item.disable = true;
+          item.choosed = false;
+        }
+      });
+      this.setData(
+        {
+          'calendar.days': days,
+          'calendar.selectedDay': selectedDay || []
+        },
+        () => {
+          resolve();
+        }
+      );
     });
   }
   __isDisable(timestamp) {

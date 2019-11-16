@@ -2,7 +2,8 @@ const conf = {
   data: {
     calendarConfig: {
       showLunar: true,
-      multi: true
+      defaultDay: '2019-11-18'
+      // multi: true
     },
     actionBtn: [
       {
@@ -92,6 +93,21 @@ const conf = {
   },
   afterCalendarRender(e) {
     console.log('afterCalendarRender', e);
+    // this.calendar.switchView('week');
+    this.calendar.setDateStyle([
+      {
+        year: 2019,
+        month: 11,
+        day: 19,
+        class: 'blue-date'
+      },
+      {
+        year: 2019,
+        month: 11,
+        day: 28,
+        class: 'orange-date'
+      }
+    ]);
   },
   onSwipe(e) {
     console.log('onSwipe', e);

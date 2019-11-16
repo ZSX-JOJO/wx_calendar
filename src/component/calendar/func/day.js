@@ -152,6 +152,37 @@ class Day extends WxData {
       'calendar.disableDays': _disableDays
     });
   }
+  /**
+   * 设置指定日期样式
+   * @param {array} dates 待设置特殊样式的日期
+   */
+  setDateStyle(dates) {
+    const { days, specialStyleDates } = this.getData('calendar');
+    if (specialStyleDates && specialStyleDates.length) {
+      dates = specialStyleDates;
+    }
+    if (!dates || !dates.length) return;
+    const _specialStyleDates = dates.map(
+      item => `${item.year}_${item.month}_${item.day}`
+    );
+    const _days = days.map(item => {
+      const idx = _specialStyleDates.indexOf(
+        `${item.year}_${item.month}_${item.day}`
+      );
+      if (idx > -1) {
+        return {
+          ...item,
+          class: dates[idx].class
+        };
+      } else {
+        return { ...item };
+      }
+    });
+    this.setData({
+      'calendar.days': _days,
+      'calendar.specialStyleDates': dates
+    });
+  }
   __judgeParam(params) {
     const {
       start,

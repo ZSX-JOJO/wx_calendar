@@ -50,7 +50,7 @@
       return Object.prototype.hasOwnProperty.call(e, t);
     }),
     (a.p = ''),
-    a((a.s = 7));
+    a((a.s = 8));
 })([
   function(e, t, a) {
     'use strict';
@@ -238,6 +238,243 @@
       }
     };
     t.default = n;
+  },
+  function(e, t, a) {
+    'use strict';
+    Object.defineProperty(t, '__esModule', { value: !0 }), (t.default = void 0);
+    var n = o(a(1)),
+      s = o(a(3)),
+      r = a(0);
+    function o(e) {
+      return e && e.__esModule ? e : { default: e };
+    }
+    const c = new r.Logger(),
+      l = new r.GetDate();
+    class d extends n.default {
+      constructor(e) {
+        super(e), (this.Component = e);
+      }
+      enableArea(e = []) {
+        if (2 === e.length) {
+          const { start: t, end: a, startTimestamp: n, endTimestamp: s } = (0,
+          r.convertEnableAreaToTimestamp)(e);
+          if (!t || !a) return;
+          const o = l.thisMonthDays(t[0], t[1]),
+            c = l.thisMonthDays(a[0], a[1]);
+          if (
+            this.__judgeParam({
+              start: t,
+              end: a,
+              startMonthDays: o,
+              endMonthDays: c,
+              startTimestamp: n,
+              endTimestamp: s
+            })
+          ) {
+            let { days: t = [], selectedDay: a = [] } = this.getData(
+              'calendar'
+            );
+            const r = this.__handleEnableArea(
+              { area: e, days: t, startTimestamp: n, endTimestamp: s },
+              a
+            );
+            this.setData({
+              'calendar.enableArea': e,
+              'calendar.days': r.dates,
+              'calendar.selectedDay': r.selectedDay,
+              'calendar.enableAreaTimestamp': [n, s]
+            });
+          }
+        } else
+          c.warn(
+            'enableArea()参数需为时间范围数组，形如：["2018-8-4" , "2018-8-24"]'
+          );
+      }
+      enableDays(e = []) {
+        const { enableArea: t = [] } = this.getData('calendar');
+        let a = [];
+        a = t.length
+          ? (0, r.delRepeatedEnableDay)(e, t)
+          : (0, r.converEnableDaysToTimestamp)(e);
+        let { days: n = [], selectedDay: s = [] } = this.getData('calendar');
+        const o = this.__handleEnableDays(
+          { days: n, expectEnableDaysTimestamp: a },
+          s
+        );
+        this.setData({
+          'calendar.days': o.dates,
+          'calendar.selectedDay': o.selectedDay,
+          'calendar.enableDays': e,
+          'calendar.enableDaysTimestamp': a
+        });
+      }
+      setSelectedDays(e) {
+        if (!(0, s.default)(this.Component).getCalendarConfig().multi)
+          return c.warn('单选模式下不能设置多日期选中，请配置 multi');
+        let { days: t } = this.getData('calendar'),
+          a = [];
+        if (e) {
+          if (e && e.length) {
+            const { dates: n, selectedDates: s } = this.__handleSelectedDays(
+              t,
+              a,
+              e
+            );
+            (t = n), (a = s);
+          }
+        } else
+          t.map(e => {
+            (e.choosed = !0), (e.showTodoLabel = !1);
+          }),
+            (a = t);
+        (0, s.default)(this.Component).setCalendarConfig('multi', !0),
+          this.setData({ 'calendar.days': t, 'calendar.selectedDay': a });
+      }
+      disableDays(e) {
+        const { disableDays: t = [], days: a } = this.getData('calendar');
+        if ('[object Array]' !== Object.prototype.toString.call(e))
+          return c.warn('disableDays 参数为数组');
+        let n = [];
+        if (e.length) {
+          const s = (n = (0, r.uniqueArrayByDate)(e.concat(t))).map(
+            e => `${e.year}-${e.month}-${e.day}`
+          );
+          a.forEach(e => {
+            const t = `${e.year}-${e.month}-${e.day}`;
+            s.includes(t) && (e.disable = !0);
+          });
+        } else
+          a.forEach(e => {
+            e.disable = !1;
+          });
+        this.setData({ 'calendar.days': a, 'calendar.disableDays': n });
+      }
+      setDateStyle(e) {
+        const { days: t, specialStyleDates: a } = this.getData('calendar');
+        if ((a && a.length && (e = a), !e || !e.length)) return;
+        const n = e.map(e => `${e.year}_${e.month}_${e.day}`),
+          s = t.map(t => {
+            const a = n.indexOf(`${t.year}_${t.month}_${t.day}`);
+            return a > -1 ? { ...t, class: e[a].class } : { ...t };
+          });
+        this.setData({ 'calendar.days': s, 'calendar.specialStyleDates': e });
+      }
+      __judgeParam(e) {
+        const {
+          start: t,
+          end: a,
+          startMonthDays: n,
+          endMonthDays: s,
+          startTimestamp: r,
+          endTimestamp: o
+        } = e;
+        return t[2] > n || t[2] < 1
+          ? (c.warn(
+              'enableArea() 开始日期错误，指定日期不在当前月份天数范围内'
+            ),
+            !1)
+          : t[1] > 12 || t[1] < 1
+          ? (c.warn('enableArea() 开始日期错误，月份超出1-12月份'), !1)
+          : a[2] > s || a[2] < 1
+          ? (c.warn(
+              'enableArea() 截止日期错误，指定日期不在当前月份天数范围内'
+            ),
+            !1)
+          : a[1] > 12 || a[1] < 1
+          ? (c.warn('enableArea() 截止日期错误，月份超出1-12月份'), !1)
+          : !(r > o) || (c.warn('enableArea()参数最小日期大于了最大日期'), !1);
+      }
+      __handleEnableArea(e = {}, t = []) {
+        const { area: a, days: n, startTimestamp: s, endTimestamp: o } = e,
+          c = this.getData('calendar.enableDays') || [];
+        let d = [];
+        c.length && (d = (0, r.delRepeatedEnableDay)(c, a));
+        const b = [...n];
+        return (
+          b.forEach(e => {
+            const a = l.newDate(e.year, e.month, e.day).getTime();
+            (+s > +a || +a > +o) && !d.includes(+a)
+              ? ((e.disable = !0),
+                e.choosed &&
+                  ((e.choosed = !1),
+                  (t = t.filter(
+                    t =>
+                      `${e.year}-${e.month}-${e.day}` !==
+                      `${t.year}-${t.month}-${t.day}`
+                  ))))
+              : e.disable && (e.disable = !1);
+          }),
+          { dates: b, selectedDay: t }
+        );
+      }
+      __handleEnableDays(e = {}, t = []) {
+        const { days: a, expectEnableDaysTimestamp: n } = e,
+          { enableAreaTimestamp: s = [] } = this.getData('calendar'),
+          r = [...a];
+        return (
+          r.forEach(e => {
+            const a = l.newDate(e.year, e.month, e.day).getTime();
+            let r = !1;
+            s.length
+              ? (+s[0] > +a || +a > +s[1]) && !n.includes(+a) && (r = !0)
+              : n.includes(+a) || (r = !0),
+              r
+                ? ((e.disable = !0),
+                  e.choosed &&
+                    ((e.choosed = !1),
+                    (t = t.filter(
+                      t =>
+                        `${e.year}-${e.month}-${e.day}` !==
+                        `${t.year}-${t.month}-${t.day}`
+                    ))))
+                : (e.disable = !1);
+          }),
+          { dates: r, selectedDay: t }
+        );
+      }
+      __handleSelectedDays(e = [], t = [], a) {
+        const { selectedDay: n, showLabelAlways: s } = this.getData('calendar');
+        t = n && n.length ? (0, r.uniqueArrayByDate)(n.concat(a)) : a;
+        const { year: o, month: c } = e[0],
+          l = [];
+        return (
+          t.forEach(e => {
+            +e.year == +o &&
+              +e.month == +c &&
+              l.push(`${e.year}-${e.month}-${e.day}`);
+          }),
+          [...e].map(e => {
+            l.includes(`${e.year}-${e.month}-${e.day}`) &&
+              ((e.choosed = !0),
+              s && e.showTodoLabel
+                ? (e.showTodoLabel = !0)
+                : (e.showTodoLabel = !1));
+          }),
+          { dates: e, selectedDates: t }
+        );
+      }
+    }
+    t.default = e => new d(e);
+  },
+  function(e, t, a) {
+    'use strict';
+    Object.defineProperty(t, '__esModule', { value: !0 }), (t.default = void 0);
+    class n {
+      constructor(e) {
+        this.Component = e;
+      }
+      getCalendarConfig() {
+        return this.Component && this.Component.config
+          ? this.Component.config
+          : {};
+      }
+      setCalendarConfig(e, t) {
+        this.Component &&
+          this.Component.config &&
+          (this.Component.config[e] = t);
+      }
+    }
+    t.default = e => new n(e);
   },
   function(e, t, a) {
     'use strict';
@@ -974,53 +1211,34 @@
   function(e, t, a) {
     'use strict';
     Object.defineProperty(t, '__esModule', { value: !0 }), (t.default = void 0);
-    class n {
-      constructor(e) {
-        this.Component = e;
-      }
-      getCalendarConfig() {
-        return this.Component && this.Component.config
-          ? this.Component.config
-          : {};
-      }
-      setCalendarConfig(e, t) {
-        this.Component &&
-          this.Component.config &&
-          (this.Component.config[e] = t);
-      }
-    }
-    t.default = e => new n(e);
-  },
-  function(e, t, a) {
-    'use strict';
-    Object.defineProperty(t, '__esModule', { value: !0 }), (t.default = void 0);
-    var n = l(a(1)),
-      s = l(a(5)),
-      r = l(a(3)),
-      o = l(a(2)),
-      c = a(0);
-    function l(e) {
+    var n = d(a(2)),
+      s = d(a(1)),
+      r = d(a(6)),
+      o = d(a(3)),
+      c = d(a(4)),
+      l = a(0);
+    function d(e) {
       return e && e.__esModule ? e : { default: e };
     }
-    const d = new c.GetDate(),
-      b = new c.Logger();
-    class f extends n.default {
+    const b = new l.GetDate(),
+      f = new l.Logger();
+    class i extends s.default {
       constructor(e) {
         super(e),
           (this.Component = e),
-          (this.getCalendarConfig = (0, r.default)(
+          (this.getCalendarConfig = (0, o.default)(
             this.Component
           ).getCalendarConfig);
       }
       switchWeek(e, t) {
         return new Promise((a, n) => {
-          if ((0, r.default)(this.Component).getCalendarConfig().multi)
-            return b.warn('多选模式不能切换周月视图');
-          const { selectedDay: o = [], curYear: c, curMonth: l } = this.getData(
+          if ((0, o.default)(this.Component).getCalendarConfig().multi)
+            return f.warn('多选模式不能切换周月视图');
+          const { selectedDay: s = [], curYear: c, curMonth: l } = this.getData(
             'calendar'
           );
-          if (!o.length) return this.__tipsWhenCanNotSwtich();
-          const d = o[0];
+          if (!s.length) return this.__tipsWhenCanNotSwtich();
+          const d = s[0];
           if ('week' === e) {
             if (this.Component.weekMode) return;
             const e = t || d,
@@ -1034,7 +1252,7 @@
           } else
             (this.Component.weekMode = !1),
               this.setData({ 'calendar.weekMode': !1 }),
-              (0, s.default)(this.Component)
+              (0, r.default)(this.Component)
                 .renderCalendar(c, l, t)
                 .then(a)
                 .catch(n);
@@ -1044,7 +1262,7 @@
         let { days: t, curYear: a, curMonth: n } = this.getData('calendar');
         const { month: s } = t[0],
           { month: r } = t[t.length - 1],
-          o = d.thisMonthDays(a, n),
+          o = b.thisMonthDays(a, n),
           c = t[t.length - 1],
           l = t[0];
         return (
@@ -1063,7 +1281,7 @@
         );
         return {
           lastDayInThisWeek: e[e.length - 1].day,
-          lastDayInThisMonth: d.thisMonthDays(t, a)
+          lastDayInThisMonth: b.thisMonthDays(t, a)
         };
       }
       calculateFirstDay() {
@@ -1071,23 +1289,23 @@
         return { firstDayInThisWeek: e[0].day };
       }
       firstWeekInMonth(e, t, a) {
-        let n = d.dayOfWeek(e, t, 1);
-        const [, r] = [0, 7 - n];
+        let n = b.dayOfWeek(e, t, 1);
+        const [, s] = [0, 7 - n];
         let o = this.getData('calendar.days') || [];
         return (
           this.Component.weekMode &&
-            (o = (0, s.default)(this.Component).buildDate(e, t)),
-          o.slice(0, a ? r + 1 : r)
+            (o = (0, r.default)(this.Component).buildDate(e, t)),
+          o.slice(0, a ? s + 1 : s)
         );
       }
       lastWeekInMonth(e, t, a) {
-        const n = d.thisMonthDays(e, t),
-          r = d.dayOfWeek(e, t, n),
-          [o, c] = [n - r, n];
+        const n = b.thisMonthDays(e, t),
+          s = b.dayOfWeek(e, t, n),
+          [o, c] = [n - s, n];
         let l = this.getData('calendar.days') || [];
         return (
           this.Component.weekMode &&
-            (l = (0, s.default)(this.Component).buildDate(e, t)),
+            (l = (0, r.default)(this.Component).buildDate(e, t)),
           l.slice(a ? o : o - 1, c)
         );
       }
@@ -1116,14 +1334,14 @@
           enableDaysTimestamp: n = []
         } = this.getData('calendar');
         e.forEach(e => {
-          const s = d.newDate(e.year, e.month, e.day).getTime();
-          let o = !1;
+          const s = b.newDate(e.year, e.month, e.day).getTime();
+          let r = !1;
           a.length
-            ? (+a[0] > +s || +s > +a[1]) && !n.includes(+s) && (o = !0)
-            : n.length && !n.includes(+s) && (o = !0),
-            o && ((e.disable = !0), (e.choosed = !1));
+            ? (+a[0] > +s || +s > +a[1]) && !n.includes(+s) && (r = !0)
+            : n.length && !n.includes(+s) && (r = !0),
+            r && ((e.disable = !0), (e.choosed = !1));
           const { disablePastDay: c } =
-            (0, r.default)(this.Component).getCalendarConfig() || {};
+            (0, o.default)(this.Component).getCalendarConfig() || {};
           c && s - t < 0 && !e.disable && (e.disable = !0);
         });
       }
@@ -1132,56 +1350,66 @@
             lastDayInThisWeek: e,
             lastDayInThisMonth: t
           } = this.calculateLastDay(),
-          { curYear: a, curMonth: n } = this.getData('calendar'),
-          s = [];
+          { curYear: a, curMonth: s } = this.getData('calendar'),
+          r = [];
         if (t - e >= 7) {
-          const { Uyear: t, Umonth: r } = this.updateCurrYearAndMonth('next');
-          (a = t), (n = r);
+          const { Uyear: t, Umonth: n } = this.updateCurrYearAndMonth('next');
+          (a = t), (s = n);
           for (let t = e + 1; t <= e + 7; t++)
-            s.push({ year: a, month: n, day: t, week: d.dayOfWeek(a, n, t) });
+            r.push({ year: a, month: s, day: t, week: b.dayOfWeek(a, s, t) });
         } else {
-          for (let r = e + 1; r <= t; r++)
-            s.push({ year: a, month: n, day: r, week: d.dayOfWeek(a, n, r) });
-          const { Uyear: r, Umonth: o } = this.updateCurrYearAndMonth('next');
-          (a = r), (n = o);
-          for (let r = 1; r <= 7 - (t - e); r++)
-            s.push({ year: a, month: n, day: r, week: d.dayOfWeek(a, n, r) });
+          for (let n = e + 1; n <= t; n++)
+            r.push({ year: a, month: s, day: n, week: b.dayOfWeek(a, s, n) });
+          const { Uyear: n, Umonth: o } = this.updateCurrYearAndMonth('next');
+          (a = n), (s = o);
+          for (let n = 1; n <= 7 - (t - e); n++)
+            r.push({ year: a, month: s, day: n, week: b.dayOfWeek(a, s, n) });
         }
-        (s = this.initSelectedDay(s)),
-          this.setEnableAreaOnWeekMode(s),
-          this.setData({
-            'calendar.curYear': a,
-            'calendar.curMonth': n,
-            'calendar.days': s
-          });
+        (r = this.initSelectedDay(r)),
+          this.setEnableAreaOnWeekMode(r),
+          this.setData(
+            {
+              'calendar.curYear': a,
+              'calendar.curMonth': s,
+              'calendar.days': r
+            },
+            () => {
+              (0, n.default)(this.Component).setDateStyle();
+            }
+          );
       }
       calculatePrevWeekDays() {
         let { firstDayInThisWeek: e } = this.calculateFirstDay(),
           { curYear: t, curMonth: a } = this.getData('calendar'),
-          n = [];
+          s = [];
         if (e - 7 > 0) {
-          const { Uyear: s, Umonth: r } = this.updateCurrYearAndMonth('prev');
-          (t = s), (a = r);
-          for (let s = e - 7; s < e; s++)
-            n.push({ year: t, month: a, day: s, week: d.dayOfWeek(t, a, s) });
+          const { Uyear: n, Umonth: r } = this.updateCurrYearAndMonth('prev');
+          (t = n), (a = r);
+          for (let n = e - 7; n < e; n++)
+            s.push({ year: t, month: a, day: n, week: b.dayOfWeek(t, a, n) });
         } else {
-          let s = [];
-          for (let n = 1; n < e; n++)
-            s.push({ year: t, month: a, day: n, week: d.dayOfWeek(t, a, n) });
+          let n = [];
+          for (let s = 1; s < e; s++)
+            n.push({ year: t, month: a, day: s, week: b.dayOfWeek(t, a, s) });
           const { Uyear: r, Umonth: o } = this.updateCurrYearAndMonth('prev');
           (t = r), (a = o);
-          const c = d.thisMonthDays(t, a);
-          for (let s = c - Math.abs(e - 7); s <= c; s++)
-            n.push({ year: t, month: a, day: s, week: d.dayOfWeek(t, a, s) });
-          n = n.concat(s);
+          const c = b.thisMonthDays(t, a);
+          for (let n = c - Math.abs(e - 7); n <= c; n++)
+            s.push({ year: t, month: a, day: n, week: b.dayOfWeek(t, a, n) });
+          s = s.concat(n);
         }
-        (n = this.initSelectedDay(n)),
-          this.setEnableAreaOnWeekMode(n),
-          this.setData({
-            'calendar.curYear': t,
-            'calendar.curMonth': a,
-            'calendar.days': n
-          });
+        (s = this.initSelectedDay(s)),
+          this.setEnableAreaOnWeekMode(s),
+          this.setData(
+            {
+              'calendar.curYear': t,
+              'calendar.curMonth': a,
+              'calendar.days': s
+            },
+            () => {
+              (0, n.default)(this.Component).setDateStyle();
+            }
+          );
       }
       calculateDatesWhenJump(
         { year: e, month: t, day: a },
@@ -1198,41 +1426,43 @@
           : this.__calculateDates({ year: e, month: t, day: a }));
       }
       jump({ year: e, month: t, day: a }) {
-        return new Promise(n => {
+        return new Promise(s => {
           if (!a) return;
-          const s = this.getCalendarConfig(),
-            r = 'Mon' === s.firstDayOfWeek,
-            o = this.firstWeekInMonth(e, t, r);
-          let c = this.lastWeekInMonth(e, t, r),
-            l = this.calculateDatesWhenJump(
+          const r = this.getCalendarConfig(),
+            o = 'Mon' === r.firstDayOfWeek,
+            c = this.firstWeekInMonth(e, t, o);
+          let l = this.lastWeekInMonth(e, t, o),
+            d = this.calculateDatesWhenJump(
               { year: e, month: t, day: a },
-              { firstWeekDays: o, lastWeekDays: c },
-              r
+              { firstWeekDays: c, lastWeekDays: l },
+              o
             );
-          (l = l.map(n => {
-            let r = { ...n };
+          (d = d.map(n => {
+            let s = { ...n };
             return (
-              +r.year == +e &&
-                +r.month == +t &&
-                +r.day == +a &&
-                (r.choosed = !0),
-              (r = this.__setTodoWhenJump(r, s)),
-              s.showLunar && (r = this.__setSolarLunar(r)),
-              s.highlightToday && (r = this.__highlightToday(r)),
-              r
+              +s.year == +e &&
+                +s.month == +t &&
+                +s.day == +a &&
+                (s.choosed = !0),
+              (s = this.__setTodoWhenJump(s, r)),
+              r.showLunar && (s = this.__setSolarLunar(s)),
+              r.highlightToday && (s = this.__highlightToday(s)),
+              s
             );
           })),
-            this.setEnableAreaOnWeekMode(l),
+            this.setEnableAreaOnWeekMode(d),
             this.setData(
               {
-                'calendar.days': l,
+                'calendar.days': d,
                 'calendar.curYear': e,
                 'calendar.curMonth': t,
                 'calendar.empytGrids': [],
                 'calendar.lastEmptyGrids': [],
-                'calendar.selectedDay': l.filter(e => e.choosed)
+                'calendar.selectedDay': d.filter(e => e.choosed)
               },
-              n
+              () => {
+                (0, n.default)(this.Component).setDateStyle(), s();
+              }
             );
         });
       }
@@ -1251,11 +1481,11 @@
       }
       __setSolarLunar(e) {
         const t = { ...e };
-        return (t.lunar = o.default.solar2lunar(+t.year, +t.month, +t.day)), t;
+        return (t.lunar = c.default.solar2lunar(+t.year, +t.month, +t.day)), t;
       }
       __highlightToday(e) {
         const t = { dateInfo: e },
-          a = d.todayDate(),
+          a = b.todayDate(),
           n = +a.year == +t.year && +a.month == +t.month && +t.day == +a.date;
         return (t.isToday = n), t;
       }
@@ -1267,8 +1497,8 @@
             s = 7 - a.length;
           for (
             n > 1
-              ? ((n -= 1), (e = d.thisMonthDays(t, n)))
-              : ((n = 12), (t -= 1), (e = d.thisMonthDays(t, n)));
+              ? ((n -= 1), (e = b.thisMonthDays(t, n)))
+              : ((n = 12), (t -= 1), (e = b.thisMonthDays(t, n)));
             s;
 
           )
@@ -1276,7 +1506,7 @@
               year: t,
               month: n,
               day: e,
-              week: d.dayOfWeek(t, n, e)
+              week: b.dayOfWeek(t, n, e)
             }),
               (e -= 1),
               (s -= 1);
@@ -1290,18 +1520,18 @@
             n = 7 - a.length,
             s = 1;
           for (t > 11 ? ((t = 1), (e += 1)) : (t += 1); n; )
-            a.push({ year: e, month: t, day: s, week: d.dayOfWeek(e, t, s) }),
+            a.push({ year: e, month: t, day: s, week: b.dayOfWeek(e, t, s) }),
               (s += 1),
               (n -= 1);
         }
         return a;
       }
       __calculateDates({ year: e, month: t, day: a }, n) {
-        const r = d.dayOfWeek(e, t, a);
-        let o = [a - r, a + (6 - r)];
+        const s = b.dayOfWeek(e, t, a);
+        let o = [a - s, a + (6 - s)];
         return (
-          n && (o = [a + 1 - r, a + (7 - r)]),
-          (0, s.default)(this.Component)
+          n && (o = [a + 1 - s, a + (7 - s)]),
+          (0, r.default)(this.Component)
             .buildDate(e, t)
             .slice(o[0] - 1, o[1])
         );
@@ -1312,25 +1542,26 @@
         );
       }
       __tipsWhenCanNotSwtich() {
-        b.info(
+        f.info(
           '当前月份未选中日期下切换为周视图，不能明确该展示哪一周的日期，故此情况不允许切换'
         );
       }
     }
-    t.default = e => new f(e);
+    t.default = e => new i(e);
   },
   function(e, t, a) {
     'use strict';
     Object.defineProperty(t, '__esModule', { value: !0 }), (t.default = void 0);
-    var n = c(a(6)),
-      s = c(a(1)),
-      r = c(a(2)),
-      o = a(0);
-    function c(e) {
+    var n = l(a(2)),
+      s = l(a(7)),
+      r = l(a(1)),
+      o = l(a(4)),
+      c = a(0);
+    function l(e) {
       return e && e.__esModule ? e : { default: e };
     }
-    const l = new o.GetDate();
-    class d extends s.default {
+    const d = new c.GetDate();
+    class b extends r.default {
       constructor(e) {
         super(e), (this.Component = e);
       }
@@ -1338,14 +1569,21 @@
         return this.Component.config;
       }
       renderCalendar(e, t, a) {
-        return new Promise(s => {
-          this.calculateEmptyGrids(e, t), this.calculateDays(e, t, a);
-          const { todoLabels: r } = this.getData('calendar') || {};
-          r &&
-            r instanceof Array &&
-            r.find(e => +e.month == +t) &&
-            (0, n.default)(this.Component).setTodoLabels(),
-            this.Component.firstRender || s();
+        return new Promise(r => {
+          this.calculateEmptyGrids(e, t),
+            this.calculateDays(e, t, a).then(() => {
+              const { todoLabels: a, specialStyleDates: o } =
+                this.getData('calendar') || {};
+              a &&
+                o.length &&
+                a.find(a => +a.month == +t && +a.year == +e) &&
+                (0, s.default)(this.Component).setTodoLabels(),
+                o &&
+                  o.length &&
+                  o.find(a => +a.month == +t && +a.year == +e) &&
+                  (0, n.default)(this.Component).setDateStyle(),
+                this.Component.firstRender || r();
+            });
         });
       }
       calculateEmptyGrids(e, t) {
@@ -1353,21 +1591,21 @@
       }
       calculatePrevMonthGrids(e, t) {
         let a = [];
-        const n = l.thisMonthDays(e, t - 1);
-        let s = l.firstDayOfWeek(e, t);
-        const o = this.getCalendarConfig() || {};
+        const n = d.thisMonthDays(e, t - 1);
+        let s = d.firstDayOfWeek(e, t);
+        const r = this.getCalendarConfig() || {};
         if (
-          ('Mon' === o.firstDayOfWeek && (0 === s ? (s = 6) : (s -= 1)), s > 0)
+          ('Mon' === r.firstDayOfWeek && (0 === s ? (s = 6) : (s -= 1)), s > 0)
         ) {
           const c = n - s,
-            { onlyShowCurrentMonth: l } = o,
+            { onlyShowCurrentMonth: l } = r,
             { showLunar: d } = this.getCalendarConfig();
           for (let s = n; s > c; s--)
             l
               ? a.push('')
               : a.push({
                   day: s,
-                  lunar: d ? r.default.solar2lunar(e, t - 1, s) : null
+                  lunar: d ? o.default.solar2lunar(e, t - 1, s) : null
                 });
           this.setData({ 'calendar.empytGrids': a.reverse() });
         } else this.setData({ 'calendar.empytGrids': null });
@@ -1376,12 +1614,12 @@
         let n = 0;
         if (2 == +t) {
           n += 7;
-          let s = l.dayOfWeek(e, t, 1);
+          let s = d.dayOfWeek(e, t, 1);
           'Mon' === a.firstDayOfWeek
             ? 1 == +s && (n += 7)
             : 0 == +s && (n += 7);
         } else {
-          let s = l.dayOfWeek(e, t, 1);
+          let s = d.dayOfWeek(e, t, 1);
           'Mon' === a.firstDayOfWeek
             ? 0 !== s && s < 6 && (n += 7)
             : s < 6 && (n += 7);
@@ -1390,19 +1628,19 @@
       }
       calculateNextMonthGrids(e, t) {
         let a = [];
-        const n = l.thisMonthDays(e, t);
-        let s = l.dayOfWeek(e, t, n);
-        const o = this.getCalendarConfig() || {};
-        'Mon' === o.firstDayOfWeek && (0 === s ? (s = 6) : (s -= 1));
+        const n = d.thisMonthDays(e, t);
+        let s = d.dayOfWeek(e, t, n);
+        const r = this.getCalendarConfig() || {};
+        'Mon' === r.firstDayOfWeek && (0 === s ? (s = 6) : (s -= 1));
         let c = 7 - (s + 1);
-        const { onlyShowCurrentMonth: d, showLunar: b } = o;
-        d || (c += this.calculateExtraEmptyDate(e, t, o));
+        const { onlyShowCurrentMonth: l, showLunar: b } = r;
+        l || (c += this.calculateExtraEmptyDate(e, t, r));
         for (let n = 1; n <= c; n++)
-          d
+          l
             ? a.push('')
             : a.push({
                 day: n,
-                lunar: b ? r.default.solar2lunar(e, t + 1, n) : null
+                lunar: b ? o.default.solar2lunar(e, t + 1, n) : null
               });
         this.setData({ 'calendar.lastEmptyGrids': a });
       }
@@ -1412,7 +1650,7 @@
         if (s.noDefault) (n = []), (s.noDefault = !1);
         else {
           const s = this.getData('calendar') || {},
-            { showLunar: o } = this.getCalendarConfig();
+            { showLunar: r } = this.getCalendarConfig();
           n = a
             ? [
                 {
@@ -1420,8 +1658,8 @@
                   month: t,
                   day: a,
                   choosed: !0,
-                  week: l.dayOfWeek(e, t, a),
-                  lunar: o ? r.default.solar2lunar(e, t, a) : null
+                  week: d.dayOfWeek(e, t, a),
+                  lunar: r ? o.default.solar2lunar(e, t, a) : null
                 }
               ]
             : s.selectedDay;
@@ -1429,8 +1667,8 @@
         return n;
       }
       buildDate(e, t) {
-        const a = l.todayDate(),
-          n = l.thisMonthDays(e, t),
+        const a = d.todayDate(),
+          n = d.thisMonthDays(e, t),
           s = [];
         for (let r = 1; r <= n; r++) {
           const n = +a.year == +e && +a.month == +t && r === +a.date,
@@ -1440,38 +1678,47 @@
             month: t,
             day: r,
             choosed: !1,
-            week: l.dayOfWeek(e, t, r),
+            week: d.dayOfWeek(e, t, r),
             isToday: n && o.highlightToday
           });
         }
         return s;
       }
       calculateDays(e, t, a) {
-        let n = [];
-        const { todayTimestamp: s, disableDays: o = [] } = this.getData(
-          'calendar'
-        );
-        n = this.buildDate(e, t);
-        const c = this.setSelectedDay(e, t, a),
-          d = c.map(e => `${+e.year}-${+e.month}-${+e.day}`),
-          b = o.map(e => `${+e.year}-${+e.month}-${+e.day}`);
-        n.forEach(e => {
-          const t = `${+e.year}-${+e.month}-${+e.day}`;
-          d.includes(t) && (e.choosed = !0), b.includes(t) && (e.disable = !0);
-          const a = l.newDate(e.year, e.month, e.day).getTime(),
-            {
-              showLunar: n,
-              disablePastDay: o,
-              disableLaterDay: c
-            } = this.getCalendarConfig();
-          n && (e.lunar = r.default.solar2lunar(+e.year, +e.month, +e.day));
-          let f = !1;
-          o
-            ? (f = o && a - s < 0 && !e.disable)
-            : c && (f = c && a - s > 0 && !e.disable),
-            (f || this.__isDisable(a)) && ((e.disable = !0), (e.choosed = !1));
-        }),
-          this.setData({ 'calendar.days': n, 'calendar.selectedDay': c || [] });
+        return new Promise((n, s) => {
+          let r = [];
+          const { todayTimestamp: c, disableDays: l = [] } = this.getData(
+            'calendar'
+          );
+          r = this.buildDate(e, t);
+          const b = this.setSelectedDay(e, t, a),
+            f = b.map(e => `${+e.year}-${+e.month}-${+e.day}`),
+            i = l.map(e => `${+e.year}-${+e.month}-${+e.day}`);
+          r.forEach(e => {
+            const t = `${+e.year}-${+e.month}-${+e.day}`;
+            f.includes(t) && (e.choosed = !0),
+              i.includes(t) && (e.disable = !0);
+            const a = d.newDate(e.year, e.month, e.day).getTime(),
+              {
+                showLunar: n,
+                disablePastDay: s,
+                disableLaterDay: r
+              } = this.getCalendarConfig();
+            n && (e.lunar = o.default.solar2lunar(+e.year, +e.month, +e.day));
+            let l = !1;
+            s
+              ? (l = s && a - c < 0 && !e.disable)
+              : r && (l = r && a - c > 0 && !e.disable),
+              (l || this.__isDisable(a)) &&
+                ((e.disable = !0), (e.choosed = !1));
+          }),
+            this.setData(
+              { 'calendar.days': r, 'calendar.selectedDay': b || [] },
+              () => {
+                n();
+              }
+            );
+        });
       }
       __isDisable(e) {
         const {
@@ -1480,9 +1727,9 @@
           enableAreaTimestamp: n = []
         } = this.getData('calendar');
         let s = !1,
-          r = (0, o.converEnableDaysToTimestamp)(a);
+          r = (0, c.converEnableDaysToTimestamp)(a);
         return (
-          t.length && (r = (0, o.delRepeatedEnableDay)(a, t)),
+          t.length && (r = (0, c.delRepeatedEnableDay)(a, t)),
           n.length
             ? (+n[0] > +e || +e > +n[1]) && !r.includes(+e) && (s = !0)
             : r.length && !r.includes(+e) && (s = !0),
@@ -1490,7 +1737,7 @@
         );
       }
     }
-    t.default = e => new d(e);
+    t.default = e => new b(e);
   },
   function(e, t, a) {
     'use strict';
@@ -1609,7 +1856,7 @@
   function(e, t, a) {
     'use strict';
     var n,
-      s = (n = a(4)) && n.__esModule ? n : { default: n },
+      s = (n = a(5)) && n.__esModule ? n : { default: n },
       r = a(0),
       o = (function(e) {
         if (e && e.__esModule) return e;
@@ -1624,11 +1871,11 @@
               n.get || n.set ? Object.defineProperty(t, a, n) : (t[a] = e[a]);
             }
         return (t.default = e), t;
-      })(a(8));
+      })(a(9));
     const c = new r.Slide(),
       l = new r.Logger();
     Component({
-      options: { multipleSlots: !0 },
+      options: { styleIsolation: 'apply-shared', multipleSlots: !0 },
       properties: { calendarConfig: { type: Object, value: {} } },
       data: {
         handleMap: {
@@ -1787,9 +2034,9 @@
     'use strict';
     Object.defineProperty(t, '__esModule', { value: !0 }),
       (t.getCurrentYM = L),
-      (t.getSelectedDay = v),
-      (t.cancelAllSelectedDay = W),
-      (t.jump = S),
+      (t.getSelectedDay = S),
+      (t.cancelAllSelectedDay = v),
+      (t.jump = W),
       (t.setTodoLabels = $),
       (t.deleteTodoLabels = Y),
       (t.clearTodoLabels = O),
@@ -1801,15 +2048,16 @@
       (t.getCalendarConfig = j),
       (t.setCalendarConfig = G),
       (t.getCalendarDates = U),
-      (t.switchView = F),
+      (t.setDateStyle = F),
+      (t.switchView = N),
       (t.default = t.calculateNextWeekDays = t.calculatePrevWeekDays = t.whenMulitSelect = t.whenSingleSelect = t.renderCalendar = t.whenChangeDate = void 0);
-    var n = f(a(9)),
-      s = f(a(4)),
-      r = f(a(6)),
+    var n = f(a(2)),
+      s = f(a(5)),
+      r = f(a(7)),
       o = f(a(1)),
-      c = f(a(5)),
+      c = f(a(6)),
       l = f(a(3)),
-      d = f(a(2)),
+      d = f(a(4)),
       b = a(0);
     function f(e) {
       return e && e.__esModule ? e : { default: e };
@@ -1837,14 +2085,15 @@
                 .then(() => {
                   !(function(e) {
                     e.calendar = {
-                      jump: S,
-                      switchView: F,
+                      jump: W,
+                      switchView: N,
                       disableDay: A,
                       enableArea: E,
                       enableDays: I,
                       getCurrentYM: L,
-                      getSelectedDay: v,
-                      cancelAllSelectedDay: W,
+                      getSelectedDay: S,
+                      cancelAllSelectedDay: v,
+                      setDateStyle: F,
                       setTodoLabels: $,
                       getTodoLabels: x,
                       deleteTodoLabels: Y,
@@ -1983,10 +2232,10 @@
         m(e), { year: D('calendar.curYear'), month: D('calendar.curMonth') }
       );
     }
-    function v(e) {
+    function S(e) {
       return m(e), D('calendar.selectedDay');
     }
-    function W(e) {
+    function v(e) {
       m(e);
       const t = [...D('calendar.days')];
       t.map(e => {
@@ -1994,7 +2243,7 @@
       }),
         g({ 'calendar.days': t, 'calendar.selectedDay': [] });
     }
-    function S(e, t, a, n) {
+    function W(e, t, a, n) {
       m(n);
       const { selectedDay: r = [], weekMode: o } = D('calendar') || {},
         { year: c, month: l, day: d } = r[0] || {};
@@ -2051,7 +2300,10 @@
     function U(e) {
       return m(e), D('calendar.days', e);
     }
-    function F(...e) {
+    function F(e, t) {
+      e && (m(t), (0, n.default)(i).setDateStyle(e));
+    }
+    function N(...e) {
       return new Promise((t, a) => {
         const n = e[0];
         if (!e[1])
@@ -2073,7 +2325,7 @@
               .catch(a));
       });
     }
-    function N(e, t) {
+    function X(e, t) {
       (b.initialTasks.flag = 'process'),
         ((i = e).config = t),
         (function(e) {
@@ -2086,8 +2338,8 @@
             const t = e.split('-');
             if (t.length < 3)
               return h.warn('配置 jumpTo 格式应为: 2018-4-2 或 2018-04-02');
-            S(+t[0], +t[1], +t[2]);
-          } else e ? S() : ((i.config.noDefault = !0), S());
+            W(+t[0], +t[1], +t[2]);
+          } else e ? W() : ((i.config.noDefault = !0), W());
         })(t.defaultDay),
         h.tips(
           '使用中若遇问题请反馈至 https://github.com/treadpit/wx_calendar/issues ✍️'
@@ -2097,216 +2349,9 @@
     t.default = (e, t = {}) => {
       if ('process' === b.initialTasks.flag)
         return b.initialTasks.tasks.push(function() {
-          N(e, t);
+          X(e, t);
         });
-      N(e, t);
+      X(e, t);
     };
-  },
-  function(e, t, a) {
-    'use strict';
-    Object.defineProperty(t, '__esModule', { value: !0 }), (t.default = void 0);
-    var n = o(a(1)),
-      s = o(a(3)),
-      r = a(0);
-    function o(e) {
-      return e && e.__esModule ? e : { default: e };
-    }
-    const c = new r.Logger(),
-      l = new r.GetDate();
-    class d extends n.default {
-      constructor(e) {
-        super(e), (this.Component = e);
-      }
-      enableArea(e = []) {
-        if (2 === e.length) {
-          const { start: t, end: a, startTimestamp: n, endTimestamp: s } = (0,
-          r.convertEnableAreaToTimestamp)(e);
-          if (!t || !a) return;
-          const o = l.thisMonthDays(t[0], t[1]),
-            c = l.thisMonthDays(a[0], a[1]);
-          if (
-            this.__judgeParam({
-              start: t,
-              end: a,
-              startMonthDays: o,
-              endMonthDays: c,
-              startTimestamp: n,
-              endTimestamp: s
-            })
-          ) {
-            let { days: t = [], selectedDay: a = [] } = this.getData(
-              'calendar'
-            );
-            const r = this.__handleEnableArea(
-              { area: e, days: t, startTimestamp: n, endTimestamp: s },
-              a
-            );
-            this.setData({
-              'calendar.enableArea': e,
-              'calendar.days': r.dates,
-              'calendar.selectedDay': r.selectedDay,
-              'calendar.enableAreaTimestamp': [n, s]
-            });
-          }
-        } else
-          c.warn(
-            'enableArea()参数需为时间范围数组，形如：["2018-8-4" , "2018-8-24"]'
-          );
-      }
-      enableDays(e = []) {
-        const { enableArea: t = [] } = this.getData('calendar');
-        let a = [];
-        a = t.length
-          ? (0, r.delRepeatedEnableDay)(e, t)
-          : (0, r.converEnableDaysToTimestamp)(e);
-        let { days: n = [], selectedDay: s = [] } = this.getData('calendar');
-        const o = this.__handleEnableDays(
-          { days: n, expectEnableDaysTimestamp: a },
-          s
-        );
-        this.setData({
-          'calendar.days': o.dates,
-          'calendar.selectedDay': o.selectedDay,
-          'calendar.enableDays': e,
-          'calendar.enableDaysTimestamp': a
-        });
-      }
-      setSelectedDays(e) {
-        if (!(0, s.default)(this.Component).getCalendarConfig().multi)
-          return c.warn('单选模式下不能设置多日期选中，请配置 multi');
-        let { days: t } = this.getData('calendar'),
-          a = [];
-        if (e) {
-          if (e && e.length) {
-            const { dates: n, selectedDates: s } = this.__handleSelectedDays(
-              t,
-              a,
-              e
-            );
-            (t = n), (a = s);
-          }
-        } else
-          t.map(e => {
-            (e.choosed = !0), (e.showTodoLabel = !1);
-          }),
-            (a = t);
-        (0, s.default)(this.Component).setCalendarConfig('multi', !0),
-          this.setData({ 'calendar.days': t, 'calendar.selectedDay': a });
-      }
-      disableDays(e) {
-        const { disableDays: t = [], days: a } = this.getData('calendar');
-        if ('[object Array]' !== Object.prototype.toString.call(e))
-          return c.warn('disableDays 参数为数组');
-        let n = [];
-        if (e.length) {
-          const s = (n = (0, r.uniqueArrayByDate)(e.concat(t))).map(
-            e => `${e.year}-${e.month}-${e.day}`
-          );
-          a.forEach(e => {
-            const t = `${e.year}-${e.month}-${e.day}`;
-            s.includes(t) && (e.disable = !0);
-          });
-        } else
-          a.forEach(e => {
-            e.disable = !1;
-          });
-        this.setData({ 'calendar.days': a, 'calendar.disableDays': n });
-      }
-      __judgeParam(e) {
-        const {
-          start: t,
-          end: a,
-          startMonthDays: n,
-          endMonthDays: s,
-          startTimestamp: r,
-          endTimestamp: o
-        } = e;
-        return t[2] > n || t[2] < 1
-          ? (c.warn(
-              'enableArea() 开始日期错误，指定日期不在当前月份天数范围内'
-            ),
-            !1)
-          : t[1] > 12 || t[1] < 1
-          ? (c.warn('enableArea() 开始日期错误，月份超出1-12月份'), !1)
-          : a[2] > s || a[2] < 1
-          ? (c.warn(
-              'enableArea() 截止日期错误，指定日期不在当前月份天数范围内'
-            ),
-            !1)
-          : a[1] > 12 || a[1] < 1
-          ? (c.warn('enableArea() 截止日期错误，月份超出1-12月份'), !1)
-          : !(r > o) || (c.warn('enableArea()参数最小日期大于了最大日期'), !1);
-      }
-      __handleEnableArea(e = {}, t = []) {
-        const { area: a, days: n, startTimestamp: s, endTimestamp: o } = e,
-          c = this.getData('calendar.enableDays') || [];
-        let d = [];
-        c.length && (d = (0, r.delRepeatedEnableDay)(c, a));
-        const b = [...n];
-        return (
-          b.forEach(e => {
-            const a = l.newDate(e.year, e.month, e.day).getTime();
-            (+s > +a || +a > +o) && !d.includes(+a)
-              ? ((e.disable = !0),
-                e.choosed &&
-                  ((e.choosed = !1),
-                  (t = t.filter(
-                    t =>
-                      `${e.year}-${e.month}-${e.day}` !==
-                      `${t.year}-${t.month}-${t.day}`
-                  ))))
-              : e.disable && (e.disable = !1);
-          }),
-          { dates: b, selectedDay: t }
-        );
-      }
-      __handleEnableDays(e = {}, t = []) {
-        const { days: a, expectEnableDaysTimestamp: n } = e,
-          { enableAreaTimestamp: s = [] } = this.getData('calendar'),
-          r = [...a];
-        return (
-          r.forEach(e => {
-            const a = l.newDate(e.year, e.month, e.day).getTime();
-            let r = !1;
-            s.length
-              ? (+s[0] > +a || +a > +s[1]) && !n.includes(+a) && (r = !0)
-              : n.includes(+a) || (r = !0),
-              r
-                ? ((e.disable = !0),
-                  e.choosed &&
-                    ((e.choosed = !1),
-                    (t = t.filter(
-                      t =>
-                        `${e.year}-${e.month}-${e.day}` !==
-                        `${t.year}-${t.month}-${t.day}`
-                    ))))
-                : (e.disable = !1);
-          }),
-          { dates: r, selectedDay: t }
-        );
-      }
-      __handleSelectedDays(e = [], t = [], a) {
-        const { selectedDay: n, showLabelAlways: s } = this.getData('calendar');
-        t = n && n.length ? (0, r.uniqueArrayByDate)(n.concat(a)) : a;
-        const { year: o, month: c } = e[0],
-          l = [];
-        return (
-          t.forEach(e => {
-            +e.year == +o &&
-              +e.month == +c &&
-              l.push(`${e.year}-${e.month}-${e.day}`);
-          }),
-          [...e].map(e => {
-            l.includes(`${e.year}-${e.month}-${e.day}`) &&
-              ((e.choosed = !0),
-              s && e.showTodoLabel
-                ? (e.showTodoLabel = !0)
-                : (e.showTodoLabel = !1));
-          }),
-          { dates: e, selectedDates: t }
-        );
-      }
-    }
-    t.default = e => new d(e);
   }
 ]);

@@ -1484,8 +1484,8 @@
         return (t.lunar = c.default.solar2lunar(+t.year, +t.month, +t.day)), t;
       }
       __highlightToday(e) {
-        const t = { dateInfo: e },
-          a = b.todayDate(),
+        const t = { ...e },
+          a = d.todayDate(),
           n = +a.year == +t.year && +a.month == +t.month && +t.day == +a.date;
         return (t.isToday = n), t;
       }

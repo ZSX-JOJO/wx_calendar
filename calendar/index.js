@@ -1485,7 +1485,7 @@
       }
       __highlightToday(e) {
         const t = { ...e },
-          a = d.todayDate(),
+          a = b.todayDate(),
           n = +a.year == +t.year && +a.month == +t.month && +t.day == +a.date;
         return (t.isToday = n), t;
       }
@@ -1582,7 +1582,9 @@
                   o.length &&
                   o.find(a => +a.month == +t && +a.year == +e) &&
                   (0, n.default)(this.Component).setDateStyle(),
-                this.Component.firstRender || r();
+                this.Component.firstRender
+                  ? r({ firstRender: !1 })
+                  : r({ firstRender: !0 });
             });
         });
       }
@@ -1622,7 +1624,7 @@
           let s = d.dayOfWeek(e, t, 1);
           'Mon' === a.firstDayOfWeek
             ? 0 !== s && s < 6 && (n += 7)
-            : s < 6 && (n += 7);
+            : s < 5 && (n += 7);
         }
         return n;
       }
@@ -1896,10 +1898,14 @@
       methods: {
         initComp() {
           const e = this.properties.calendarConfig || {};
-          this.setTheme(e.theme), (0, o.default)(this, e);
+          this.setConfig(e), (0, o.default)(this, e);
         },
-        setTheme(e) {
-          this.setData({ 'calendarConfig.theme': e || 'default' });
+        setConfig(e) {
+          e.markToday &&
+            'string' == typeof e.markToday &&
+            (e.highlightToday = !0),
+            (e.theme = e.theme || 'default'),
+            this.setData({ calendarConfig: e });
         },
         chooseDate(e) {
           const { type: t } = e.currentTarget.dataset;
@@ -2049,7 +2055,7 @@
       (t.setCalendarConfig = G),
       (t.getCalendarDates = U),
       (t.setDateStyle = F),
-      (t.switchView = N),
+      (t.switchView = R),
       (t.default = t.calculateNextWeekDays = t.calculatePrevWeekDays = t.whenMulitSelect = t.whenSingleSelect = t.renderCalendar = t.whenChangeDate = void 0);
     var n = f(a(2)),
       s = f(a(5)),
@@ -2082,34 +2088,35 @@
             new Promise((n, s) => {
               (0, c.default)(i)
                 .renderCalendar(e, t, a)
-                .then(() => {
-                  !(function(e) {
-                    e.calendar = {
-                      jump: W,
-                      switchView: N,
-                      disableDay: A,
-                      enableArea: E,
-                      enableDays: I,
-                      getCurrentYM: L,
-                      getSelectedDay: S,
-                      cancelAllSelectedDay: v,
-                      setDateStyle: F,
-                      setTodoLabels: $,
-                      getTodoLabels: x,
-                      deleteTodoLabels: Y,
-                      clearTodoLabels: O,
-                      setSelectedDays: P,
-                      getCalendarConfig: j,
-                      setCalendarConfig: G,
-                      getCalendarDates: U
-                    };
-                  })((0, b.getCurrentPage)()),
+                .then((e = {}) => {
+                  e.firstRender &&
+                    (!(function(e) {
+                      e.calendar = {
+                        jump: W,
+                        switchView: R,
+                        disableDay: A,
+                        enableArea: E,
+                        enableDays: I,
+                        getCurrentYM: L,
+                        getSelectedDay: S,
+                        cancelAllSelectedDay: v,
+                        setDateStyle: F,
+                        setTodoLabels: $,
+                        getTodoLabels: x,
+                        deleteTodoLabels: Y,
+                        clearTodoLabels: O,
+                        setSelectedDays: P,
+                        getCalendarConfig: j,
+                        setCalendarConfig: G,
+                        getCalendarDates: U
+                      };
+                    })((0, b.getCurrentPage)()),
                     i.triggerEvent('afterCalendarRender', i),
                     (i.firstRender = !0),
                     (b.initialTasks.flag = 'finished'),
                     b.initialTasks.tasks.length &&
                       b.initialTasks.tasks.shift()(),
-                    n();
+                    n());
                 });
             })
           );
@@ -2303,7 +2310,7 @@
     function F(e, t) {
       e && (m(t), (0, n.default)(i).setDateStyle(e));
     }
-    function N(...e) {
+    function R(...e) {
       return new Promise((t, a) => {
         const n = e[0];
         if (!e[1])
@@ -2325,7 +2332,7 @@
               .catch(a));
       });
     }
-    function X(e, t) {
+    function N(e, t) {
       (b.initialTasks.flag = 'process'),
         ((i = e).config = t),
         (function(e) {
@@ -2339,7 +2346,7 @@
             if (t.length < 3)
               return h.warn('配置 jumpTo 格式应为: 2018-4-2 或 2018-04-02');
             W(+t[0], +t[1], +t[2]);
-          } else e ? W() : ((i.config.noDefault = !0), W());
+          } else e || (i.config.noDefault = !0), W();
         })(t.defaultDay),
         h.tips(
           '使用中若遇问题请反馈至 https://github.com/treadpit/wx_calendar/issues ✍️'
@@ -2349,9 +2356,9 @@
     t.default = (e, t = {}) => {
       if ('process' === b.initialTasks.flag)
         return b.initialTasks.tasks.push(function() {
-          X(e, t);
+          N(e, t);
         });
-      X(e, t);
+      N(e, t);
     };
   }
 ]);

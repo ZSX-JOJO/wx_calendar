@@ -112,6 +112,20 @@ const conf = {
         class: 'orange-date'
       }
     ]);
+    this.calendar.setDateStyle([
+      {
+        year: 2019,
+        month: 11,
+        day: 19,
+        class: 'orange-date'
+      },
+      {
+        year: 2019,
+        month: 11,
+        day: 29,
+        class: 'orange-date'
+      }
+    ]);
   },
   onSwipe(e) {
     console.log('onSwipe', e);

@@ -11,6 +11,7 @@ import {
 
 const logger = new Logger();
 const getDate = new GetDate();
+const toString = Object.prototype.toString;
 
 class Day extends WxData {
   constructor(component) {
@@ -157,11 +158,11 @@ class Day extends WxData {
    * @param {array} dates 待设置特殊样式的日期
    */
   setDateStyle(dates) {
+    if (toString.call(dates) !== '[object Array]') return;
     const { days, specialStyleDates } = this.getData('calendar');
-    if (specialStyleDates && specialStyleDates.length) {
-      dates = specialStyleDates;
+    if (toString.call(specialStyleDates) === '[object Array]') {
+      dates = uniqueArrayByDate([...specialStyleDates, ...dates]);
     }
-    if (!dates || !dates.length) return;
     const _specialStyleDates = dates.map(
       item => `${item.year}_${item.month}_${item.day}`
     );

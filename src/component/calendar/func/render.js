@@ -32,7 +32,6 @@ class Calendar extends WxData {
           this.getData('calendar') || {};
         if (
           todoLabels &&
-          specialStyleDates.length &&
           todoLabels.find(
             item => +item.month === +curMonth && +item.year === +curYear
           )
@@ -46,7 +45,7 @@ class Calendar extends WxData {
             item => +item.month === +curMonth && +item.year === +curYear
           )
         ) {
-          Day(this.Component).setDateStyle();
+          Day(this.Component).setDateStyle(specialStyleDates);
         }
 
         if (!this.Component.firstRender) {
